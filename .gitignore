@@ -1,0 +1,54 @@
+﻿# ===========================
+# MarginGuard .gitignore
+# ===========================
+
+# --- Dependencies ---
+node_modules/
+.venv/
+venv/
+env/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+*.egg
+
+# --- Environment & Secrets ---
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# --- Build Outputs ---
+dist/
+build/
+*.tsbuildinfo
+
+# --- Test & Coverage ---
+.coverage
+htmlcov/
+.pytest_cache/
+coverage/
+*.lcov
+
+# --- IDE & Editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- OS Files ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Docker ---
+docker-compose.override.yml
+
+# --- Misc ---
+*.log
+*.tmp

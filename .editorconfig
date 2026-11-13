@@ -1,0 +1,25 @@
+﻿# ===========================
+# MarginGuard .editorconfig
+# ===========================
+root = true
+
+# Default (Python, Markdown, shell, etc.)
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# Frontend & config files
+[*.{js,jsx,ts,tsx,json,css,html,yml,yaml,toml}]
+indent_size = 2
+
+# Markdown — preserve intentional trailing spaces
+[*.md]
+trim_trailing_whitespace = false
+
+# Makefiles require tabs
+[Makefile]
+indent_style = tab

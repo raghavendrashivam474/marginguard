@@ -1,4 +1,4 @@
-﻿# MarginGuard CI Pipeline
+# MarginGuard CI Pipeline
 # Runs linting, formatting, type checking, build, and tests on every push and PR.
 
 name: CI

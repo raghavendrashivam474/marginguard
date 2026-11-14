@@ -1,4 +1,4 @@
-﻿# Enforce LF for all text files (CI runs on Linux)
+# Enforce LF for all text files (CI runs on Linux)
 * text=auto eol=lf
 
 # Windows scripts keep CRLF

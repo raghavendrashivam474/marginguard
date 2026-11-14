@@ -1,4 +1,4 @@
-﻿"""MarginGuard infrastructure — SQLAlchemy ORM models.
+"""MarginGuard infrastructure — SQLAlchemy ORM models.
 
 These models map domain entities to PostgreSQL tables. They live in the
 Infrastructure layer and are the only place that imports SQLAlchemy.
@@ -18,13 +18,13 @@ from datetime import date, datetime, timezone
 from sqlalchemy import (
     CHAR,
     JSON,
+    REAL,
     CheckConstraint,
     Date,
     ForeignKey,
     Index,
     Integer,
     Numeric,
-    REAL,
     String,
     Text,
     UniqueConstraint,
@@ -64,23 +64,13 @@ class OrganizationModel(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     legal_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        default=_utcnow, nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        default=_utcnow, onupdate=_utcnow, nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(default=_utcnow, onupdate=_utcnow, nullable=False)
 
     # Relationships
-    data_sources: Mapped[list["DataSourceModel"]] = relationship(
-        back_populates="organization"
-    )
-    import_batches: Mapped[list["ImportBatchModel"]] = relationship(
-        back_populates="organization"
-    )
-    suppliers: Mapped[list["SupplierModel"]] = relationship(
-        back_populates="organization"
-    )
+    data_sources: Mapped[list["DataSourceModel"]] = relationship(back_populates="organization")
+    import_batches: Mapped[list["ImportBatchModel"]] = relationship(back_populates="organization")
+    suppliers: Mapped[list["SupplierModel"]] = relationship(back_populates="organization")
 
 
 # ---------------------------------------------------------------------------
@@ -99,20 +89,12 @@ class DataSourceModel(Base):
     )
     source_type: Mapped[str] = mapped_column(String(50), nullable=False)
     source_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        default=_utcnow, nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
 
-    organization: Mapped["OrganizationModel"] = relationship(
-        back_populates="data_sources"
-    )
-    import_batches: Mapped[list["ImportBatchModel"]] = relationship(
-        back_populates="data_source"
-    )
+    organization: Mapped["OrganizationModel"] = relationship(back_populates="data_sources")
+    import_batches: Mapped[list["ImportBatchModel"]] = relationship(back_populates="data_source")
 
-    __table_args__ = (
-        Index("ix_data_sources_organization_id", "organization_id"),
-    )
+    __table_args__ = (Index("ix_data_sources_organization_id", "organization_id"),)
 
 
 # ---------------------------------------------------------------------------
@@ -136,32 +118,19 @@ class ImportBatchModel(Base):
     )
     file_name: Mapped[str] = mapped_column(String(500), nullable=False)
     file_type: Mapped[str] = mapped_column(String(20), nullable=False)
-    status: Mapped[str] = mapped_column(
-        String(30), nullable=False, default="pending"
-    )
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="pending")
     total_rows: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    successful_rows: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0
-    )
-    failed_rows: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        default=_utcnow, nullable=False
-    )
+    successful_rows: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    failed_rows: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
     completed_at: Mapped[datetime | None] = mapped_column(nullable=True)
 
-    organization: Mapped["OrganizationModel"] = relationship(
-        back_populates="import_batches"
-    )
-    data_source: Mapped["DataSourceModel"] = relationship(
-        back_populates="import_batches"
-    )
+    organization: Mapped["OrganizationModel"] = relationship(back_populates="import_batches")
+    data_source: Mapped["DataSourceModel"] = relationship(back_populates="import_batches")
 
     __table_args__ = (
         CheckConstraint(
-            "status IN ('pending','processing','completed',"
-            "'partially_completed','failed')",
+            "status IN ('pending','processing','completed','partially_completed','failed')",
             name="ck_import_batches_status",
         ),
         CheckConstraint(
@@ -187,23 +156,13 @@ class SupplierModel(Base):
         ForeignKey("organizations.id"),
         nullable=False,
     )
-    external_reference: Mapped[str | None] = mapped_column(
-        String(100), nullable=True
-    )
+    external_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    tax_identifier: Mapped[str | None] = mapped_column(
-        String(50), nullable=True
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        default=_utcnow, nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        default=_utcnow, onupdate=_utcnow, nullable=False
-    )
+    tax_identifier: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(default=_utcnow, onupdate=_utcnow, nullable=False)
 
-    organization: Mapped["OrganizationModel"] = relationship(
-        back_populates="suppliers"
-    )
+    organization: Mapped["OrganizationModel"] = relationship(back_populates="suppliers")
 
     __table_args__ = (
         Index("ix_suppliers_organization_id", "organization_id"),
@@ -230,23 +189,15 @@ class PurchaseOrderModel(Base):
         ForeignKey("suppliers.id"),
         nullable=False,
     )
-    external_reference: Mapped[str] = mapped_column(
-        String(100), nullable=False
-    )
+    external_reference: Mapped[str] = mapped_column(String(100), nullable=False)
     order_date: Mapped[date] = mapped_column(Date, nullable=False)
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
-    total_amount: Mapped[float] = mapped_column(
-        Numeric(18, 4, asdecimal=True), nullable=False
-    )
+    total_amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
     status: Mapped[str] = mapped_column(String(30), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        default=_utcnow, nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
 
     __table_args__ = (
-        CheckConstraint(
-            "total_amount >= 0", name="ck_purchase_orders_total_amount"
-        ),
+        CheckConstraint("total_amount >= 0", name="ck_purchase_orders_total_amount"),
         UniqueConstraint(
             "organization_id",
             "external_reference",
@@ -281,24 +232,14 @@ class InvoiceModel(Base):
         ForeignKey("purchase_orders.id"),
         nullable=True,
     )
-    external_reference: Mapped[str] = mapped_column(
-        String(100), nullable=False
-    )
+    external_reference: Mapped[str] = mapped_column(String(100), nullable=False)
     invoice_date: Mapped[date] = mapped_column(Date, nullable=False)
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
-    subtotal: Mapped[float] = mapped_column(
-        Numeric(18, 4, asdecimal=True), nullable=False
-    )
-    tax_amount: Mapped[float] = mapped_column(
-        Numeric(18, 4, asdecimal=True), nullable=False
-    )
-    total_amount: Mapped[float] = mapped_column(
-        Numeric(18, 4, asdecimal=True), nullable=False
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        default=_utcnow, nullable=False
-    )
+    subtotal: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
+    tax_amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
+    total_amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
 
     __table_args__ = (
         CheckConstraint("subtotal >= 0", name="ck_invoices_subtotal"),
@@ -329,20 +270,12 @@ class PaymentModel(Base):
         ForeignKey("suppliers.id"),
         nullable=True,
     )
-    external_reference: Mapped[str | None] = mapped_column(
-        String(100), nullable=True
-    )
+    external_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)
     payment_date: Mapped[date] = mapped_column(Date, nullable=False)
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
-    amount: Mapped[float] = mapped_column(
-        Numeric(18, 4, asdecimal=True), nullable=False
-    )
-    payment_method: Mapped[str | None] = mapped_column(
-        String(50), nullable=True
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        default=_utcnow, nullable=False
-    )
+    amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
+    payment_method: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
 
     __table_args__ = (
         CheckConstraint("amount > 0", name="ck_payments_amount"),
@@ -366,38 +299,22 @@ class MatchModel(Base):
         nullable=False,
     )
     match_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    source_record_type: Mapped[str] = mapped_column(
-        String(30), nullable=False
-    )
-    source_record_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), nullable=False
-    )
-    target_record_type: Mapped[str] = mapped_column(
-        String(30), nullable=False
-    )
-    target_record_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), nullable=False
-    )
-    matched_amount: Mapped[float] = mapped_column(
-        Numeric(18, 4, asdecimal=True), nullable=False
-    )
+    source_record_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    source_record_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    target_record_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    target_record_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    matched_amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
     matching_method: Mapped[str] = mapped_column(String(50), nullable=False)
     confidence: Mapped[float] = mapped_column(REAL, nullable=False)
-    status: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="proposed"
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        default=_utcnow, nullable=False
-    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="proposed")
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
 
     __table_args__ = (
         CheckConstraint(
             "confidence >= 0.0 AND confidence <= 1.0",
             name="ck_matches_confidence",
         ),
-        CheckConstraint(
-            "matched_amount > 0", name="ck_matches_matched_amount"
-        ),
+        CheckConstraint("matched_amount > 0", name="ck_matches_matched_amount"),
         CheckConstraint(
             "source_record_id != target_record_id",
             name="ck_matches_different_records",
@@ -432,24 +349,16 @@ class FindingModel(Base):
     )
     finding_type: Mapped[str] = mapped_column(String(50), nullable=False)
     severity: Mapped[str] = mapped_column(String(20), nullable=False)
-    status: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="detected"
-    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="detected")
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    amount_at_risk: Mapped[float] = mapped_column(
-        Numeric(18, 4, asdecimal=True), nullable=False
-    )
+    amount_at_risk: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
     confidence: Mapped[float] = mapped_column(REAL, nullable=False)
     rule_id: Mapped[str] = mapped_column(String(100), nullable=False)
     rule_version: Mapped[str] = mapped_column(String(20), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        default=_utcnow, nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        default=_utcnow, onupdate=_utcnow, nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(default=_utcnow, onupdate=_utcnow, nullable=False)
 
     evidence: Mapped[list["EvidenceModel"]] = relationship(
         back_populates="finding", cascade="all, delete-orphan"
@@ -460,9 +369,7 @@ class FindingModel(Base):
             "confidence >= 0.0 AND confidence <= 1.0",
             name="ck_findings_confidence",
         ),
-        CheckConstraint(
-            "amount_at_risk >= 0", name="ck_findings_amount_at_risk"
-        ),
+        CheckConstraint("amount_at_risk >= 0", name="ck_findings_amount_at_risk"),
         Index("ix_findings_organization_id", "organization_id"),
         Index("ix_findings_status", "status"),
         Index("ix_findings_finding_type", "finding_type"),
@@ -490,23 +397,13 @@ class EvidenceModel(Base):
         nullable=False,
     )
     evidence_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    source_record_type: Mapped[str] = mapped_column(
-        String(30), nullable=False
-    )
-    source_record_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), nullable=False
-    )
+    source_record_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    source_record_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    calculation_details: Mapped[dict | None] = mapped_column(
-        JSON, nullable=True
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        default=_utcnow, nullable=False
-    )
+    calculation_details: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
 
-    finding: Mapped["FindingModel"] = relationship(
-        back_populates="evidence"
-    )
+    finding: Mapped["FindingModel"] = relationship(back_populates="evidence")
 
     __table_args__ = (
         Index("ix_evidence_finding_id", "finding_id"),
@@ -533,16 +430,10 @@ class InvestigationModel(Base):
         ForeignKey("findings.id"),
         nullable=False,
     )
-    status: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="open"
-    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
     review_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        default=_utcnow, nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        default=_utcnow, onupdate=_utcnow, nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(default=_utcnow, onupdate=_utcnow, nullable=False)
 
     __table_args__ = (
         CheckConstraint(

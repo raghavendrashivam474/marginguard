@@ -24,7 +24,7 @@ from sqlalchemy import (
     Index,
     Integer,
     Numeric,
-    Real,
+    REAL,
     String,
     Text,
     UniqueConstraint,
@@ -382,7 +382,7 @@ class MatchModel(Base):
         Numeric(18, 4, asdecimal=True), nullable=False
     )
     matching_method: Mapped[str] = mapped_column(String(50), nullable=False)
-    confidence: Mapped[float] = mapped_column(Real, nullable=False)
+    confidence: Mapped[float] = mapped_column(REAL, nullable=False)
     status: Mapped[str] = mapped_column(
         String(20), nullable=False, default="proposed"
     )
@@ -441,7 +441,7 @@ class FindingModel(Base):
         Numeric(18, 4, asdecimal=True), nullable=False
     )
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
-    confidence: Mapped[float] = mapped_column(Real, nullable=False)
+    confidence: Mapped[float] = mapped_column(REAL, nullable=False)
     rule_id: Mapped[str] = mapped_column(String(100), nullable=False)
     rule_version: Mapped[str] = mapped_column(String(20), nullable=False)
     created_at: Mapped[datetime] = mapped_column(

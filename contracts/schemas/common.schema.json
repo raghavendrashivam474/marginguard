@@ -1,0 +1,97 @@
+﻿{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "common.schema.json",
+  "title": "MarginGuard Common Definitions",
+  "description": "Shared types referenced by all MarginGuard contracts.",
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "examples": ["550e8400-e29b-41d4-a716-446655440000"]
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "ISO 4217 currency code",
+      "examples": ["INR", "USD", "EUR", "GBP"]
+    },
+    "money_string": {
+      "type": "string",
+      "pattern": "^-?[0-9]+(\\.[0-9]{1,4})?$",
+      "description": "Decimal monetary value serialized as string to preserve precision",
+      "examples": ["42000.00", "150.75", "0.00"]
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO 8601 date (business document date, not a timestamp)",
+      "examples": ["2025-11-14"]
+    },
+    "datetime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp, always UTC",
+      "examples": ["2025-11-14T12:00:00Z"]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Confidence score between 0 and 1"
+    },
+    "pagination_params": {
+      "type": "object",
+      "properties": {
+        "page": { "type": "integer", "minimum": 1, "default": 1 },
+        "page_size": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 }
+      }
+    },
+    "paginated_response": {
+      "type": "object",
+      "required": ["items", "total", "page", "page_size"],
+      "properties": {
+        "items": { "type": "array" },
+        "total": { "type": "integer", "minimum": 0 },
+        "page": { "type": "integer", "minimum": 1 },
+        "page_size": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "error_response": {
+      "type": "object",
+      "required": ["error"],
+      "properties": {
+        "error": {
+          "type": "object",
+          "required": ["code", "message"],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Machine-readable error code",
+              "examples": ["VALIDATION_ERROR", "NOT_FOUND", "DUPLICATE_RESOURCE", "BUSINESS_RULE_VIOLATION", "INTERNAL_ERROR"]
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable error description"
+            },
+            "details": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": { "type": "string" },
+                  "issue": { "type": "string" }
+                }
+              },
+              "description": "Field-level validation errors"
+            },
+            "request_id": {
+              "type": "string",
+              "description": "Unique request identifier for tracing"
+            }
+          }
+        }
+      }
+    }
+  }
+}

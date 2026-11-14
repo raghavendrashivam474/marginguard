@@ -1,0 +1,22 @@
+﻿{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "import-batch.schema.json",
+  "title": "ImportBatch",
+  "description": "A single import operation with lifecycle tracking.",
+  "type": "object",
+  "required": ["id", "organization_id", "data_source_id", "file_name", "file_type", "status", "successful_rows", "failed_rows", "created_at"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "organization_id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "data_source_id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "file_name": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "file_type": { "type": "string", "enum": ["csv", "xlsx", "xls", "json"] },
+    "status": { "type": "string", "enum": ["pending", "processing", "completed", "partially_completed", "failed"] },
+    "total_rows": { "type": ["integer", "null"], "minimum": 0 },
+    "successful_rows": { "type": "integer", "minimum": 0, "default": 0 },
+    "failed_rows": { "type": "integer", "minimum": 0, "default": 0 },
+    "created_at": { "$ref": "common.schema.json#/$defs/datetime" },
+    "completed_at": { "oneOf": [{ "$ref": "common.schema.json#/$defs/datetime" }, { "type": "null" }] }
+  },
+  "additionalProperties": false
+}

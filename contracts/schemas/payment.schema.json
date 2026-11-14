@@ -1,0 +1,25 @@
+﻿{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "payment.schema.json",
+  "title": "Payment",
+  "description": "A payment made by the organization.",
+  "type": "object",
+  "required": ["id", "organization_id", "payment_date", "currency", "amount", "created_at"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "organization_id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "supplier_id": {
+      "oneOf": [
+        { "$ref": "common.schema.json#/$defs/uuid" },
+        { "type": "null" }
+      ]
+    },
+    "external_reference": { "type": ["string", "null"], "maxLength": 100 },
+    "payment_date": { "$ref": "common.schema.json#/$defs/date" },
+    "currency": { "$ref": "common.schema.json#/$defs/currency" },
+    "amount": { "$ref": "common.schema.json#/$defs/money_string" },
+    "payment_method": { "type": ["string", "null"], "maxLength": 50 },
+    "created_at": { "$ref": "common.schema.json#/$defs/datetime" }
+  },
+  "additionalProperties": false
+}

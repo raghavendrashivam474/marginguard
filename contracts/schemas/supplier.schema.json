@@ -1,0 +1,41 @@
+﻿{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "supplier.schema.json",
+  "title": "Supplier",
+  "description": "A vendor or supplier that the organization transacts with.",
+  "type": "object",
+  "required": ["id", "organization_id", "name", "created_at", "updated_at"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "organization_id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "external_reference": {
+      "type": ["string", "null"],
+      "maxLength": 100,
+      "description": "Supplier ID from source system"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "tax_identifier": {
+      "type": ["string", "null"],
+      "maxLength": 50,
+      "description": "GSTIN, VAT number, etc."
+    },
+    "created_at": { "$ref": "common.schema.json#/$defs/datetime" },
+    "updated_at": { "$ref": "common.schema.json#/$defs/datetime" }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440001",
+      "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+      "external_reference": "SUP-001",
+      "name": "Acme Raw Materials",
+      "tax_identifier": "27AABCU9603R1ZM",
+      "created_at": "2025-11-14T12:00:00Z",
+      "updated_at": "2025-11-14T12:00:00Z"
+    }
+  ]
+}

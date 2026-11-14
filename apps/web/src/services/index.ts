@@ -6,4 +6,4 @@
  * findings.ts) will be added here as CRUD routes are implemented.
  */
 
-export { apiClient, ApiClientError } from "./client";
+export { apiClient, ApiClientError } from './client'

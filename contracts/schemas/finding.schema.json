@@ -1,0 +1,25 @@
+﻿{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "finding.schema.json",
+  "title": "Finding",
+  "description": "A potential financial discrepancy detected by the reconciliation engine.",
+  "type": "object",
+  "required": ["id", "organization_id", "finding_type", "severity", "status", "title", "description", "amount_at_risk", "currency", "confidence", "rule_id", "rule_version", "created_at", "updated_at"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "organization_id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "finding_type": { "type": "string", "enum": ["duplicate_invoice", "duplicate_payment", "invoice_payment_mismatch", "purchase_order_price_mismatch", "unmatched_payment"] },
+    "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+    "status": { "type": "string", "enum": ["detected", "under_review", "confirmed", "dismissed", "resolved"] },
+    "title": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "description": { "type": "string", "minLength": 1 },
+    "amount_at_risk": { "$ref": "common.schema.json#/$defs/money_string" },
+    "currency": { "$ref": "common.schema.json#/$defs/currency" },
+    "confidence": { "$ref": "common.schema.json#/$defs/confidence" },
+    "rule_id": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "rule_version": { "type": "string", "minLength": 1, "maxLength": 20 },
+    "created_at": { "$ref": "common.schema.json#/$defs/datetime" },
+    "updated_at": { "$ref": "common.schema.json#/$defs/datetime" }
+  },
+  "additionalProperties": false
+}

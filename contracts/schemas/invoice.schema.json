@@ -1,0 +1,55 @@
+﻿{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "invoice.schema.json",
+  "title": "Invoice",
+  "description": "An invoice received from a supplier.",
+  "type": "object",
+  "required": ["id", "organization_id", "supplier_id", "external_reference", "invoice_date", "currency", "subtotal", "tax_amount", "total_amount", "created_at"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "organization_id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "supplier_id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "purchase_order_id": {
+      "oneOf": [
+        { "$ref": "common.schema.json#/$defs/uuid" },
+        { "type": "null" }
+      ],
+      "description": "Optional link to a purchase order"
+    },
+    "external_reference": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Invoice number from supplier. Not globally unique."
+    },
+    "invoice_date": { "$ref": "common.schema.json#/$defs/date" },
+    "due_date": {
+      "oneOf": [
+        { "$ref": "common.schema.json#/$defs/date" },
+        { "type": "null" }
+      ]
+    },
+    "currency": { "$ref": "common.schema.json#/$defs/currency" },
+    "subtotal": { "$ref": "common.schema.json#/$defs/money_string" },
+    "tax_amount": { "$ref": "common.schema.json#/$defs/money_string" },
+    "total_amount": { "$ref": "common.schema.json#/$defs/money_string" },
+    "created_at": { "$ref": "common.schema.json#/$defs/datetime" }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "880e8400-e29b-41d4-a716-446655440003",
+      "organization_id": "550e8400-e29b-41d4-a716-446655440000",
+      "supplier_id": "660e8400-e29b-41d4-a716-446655440001",
+      "purchase_order_id": "770e8400-e29b-41d4-a716-446655440002",
+      "external_reference": "INV-2025-0199",
+      "invoice_date": "2025-10-15",
+      "due_date": "2025-11-15",
+      "currency": "INR",
+      "subtotal": "127118.64",
+      "tax_amount": "22881.36",
+      "total_amount": "150000.00",
+      "created_at": "2025-11-14T12:00:00Z"
+    }
+  ]
+}

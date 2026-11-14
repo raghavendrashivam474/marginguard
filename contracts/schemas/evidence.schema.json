@@ -1,0 +1,27 @@
+﻿{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "evidence.schema.json",
+  "title": "Evidence",
+  "description": "Structured supporting information behind a finding.",
+  "type": "object",
+  "required": ["id", "organization_id", "finding_id", "evidence_type", "source_record_type", "source_record_id", "description", "created_at"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "organization_id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "finding_id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "evidence_type": { "type": "string", "enum": ["record_reference", "calculation", "comparison"] },
+    "source_record_type": { "type": "string", "enum": ["invoice", "payment", "purchase_order", "supplier"] },
+    "source_record_id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "description": { "type": "string", "minLength": 1 },
+    "calculation_details": {
+      "type": ["object", "null"],
+      "properties": {
+        "formula": { "type": "string" },
+        "inputs": { "type": "object" },
+        "result": { "type": "string" }
+      }
+    },
+    "created_at": { "$ref": "common.schema.json#/$defs/datetime" }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,23 @@
+﻿{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "match.schema.json",
+  "title": "Match",
+  "description": "A proposed or established relationship between two financial records.",
+  "type": "object",
+  "required": ["id", "organization_id", "match_type", "source_record_type", "source_record_id", "target_record_type", "target_record_id", "matched_amount", "matching_method", "confidence", "status", "created_at"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "organization_id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "match_type": { "type": "string", "enum": ["invoice_to_payment", "invoice_to_purchase_order", "payment_to_invoice"] },
+    "source_record_type": { "type": "string", "enum": ["invoice", "payment", "purchase_order"] },
+    "source_record_id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "target_record_type": { "type": "string", "enum": ["invoice", "payment", "purchase_order"] },
+    "target_record_id": { "$ref": "common.schema.json#/$defs/uuid" },
+    "matched_amount": { "$ref": "common.schema.json#/$defs/money_string" },
+    "matching_method": { "type": "string" },
+    "confidence": { "$ref": "common.schema.json#/$defs/confidence" },
+    "status": { "type": "string", "enum": ["proposed", "confirmed", "rejected"] },
+    "created_at": { "$ref": "common.schema.json#/$defs/datetime" }
+  },
+  "additionalProperties": false
+}

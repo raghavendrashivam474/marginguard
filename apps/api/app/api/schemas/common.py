@@ -1,4 +1,4 @@
-﻿"""MarginGuard API — common schemas.
+"""MarginGuard API — common schemas.
 
 Shared Pydantic models for error responses, pagination, and base types.
 These implement the contracts defined in ADR-004 and contracts/schemas/common.schema.json.
@@ -6,10 +6,9 @@ These implement the contracts defined in ADR-004 and contracts/schemas/common.sc
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import datetime
 from decimal import Decimal
-from typing import Any, Generic, TypeVar
-from uuid import UUID
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -73,9 +72,7 @@ class PaginationParams(BaseModel):
     """Query parameters for paginated list endpoints."""
 
     page: int = Field(default=1, ge=1, description="Page number (1-indexed)")
-    page_size: int = Field(
-        default=20, ge=1, le=100, description="Items per page (max 100)"
-    )
+    page_size: int = Field(default=20, ge=1, le=100, description="Items per page (max 100)")
 
 
 class PaginatedResponse(BaseModel, Generic[T]):
@@ -100,6 +97,4 @@ class TimestampMixin(BaseModel):
 class CurrencyField(BaseModel):
     """Validates ISO 4217 currency codes."""
 
-    currency: str = Field(
-        ..., min_length=3, max_length=3, pattern=r"^[A-Z]{3}$"
-    )
+    currency: str = Field(..., min_length=3, max_length=3, pattern=r"^[A-Z]{3}$")

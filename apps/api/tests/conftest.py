@@ -1,4 +1,4 @@
-﻿"""MarginGuard test configuration.
+"""MarginGuard test configuration.
 
 Provides shared fixtures for all backend tests.
 Uses SQLite in-memory for speed (documented exception per ADR-005).

@@ -1,4 +1,4 @@
-﻿"""MarginGuard Alembic environment configuration.
+"""MarginGuard Alembic environment configuration.
 
 This file is executed by Alembic during migration operations. It configures
 the SQLAlchemy engine and provides the target metadata for autogenerate.

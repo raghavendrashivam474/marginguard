@@ -1,4 +1,4 @@
-﻿"""MarginGuard application layer — repository ports.
+"""MarginGuard application layer — repository ports.
 
 These are abstract interfaces (Ports) that define how the Application layer
 accesses persistent data. The Infrastructure layer provides concrete

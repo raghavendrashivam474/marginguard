@@ -1,4 +1,4 @@
-﻿"""Tests for the Money value object.
+"""Tests for the Money value object.
 
 Verifies that financial arithmetic uses Decimal precision and that
 cross-currency operations are rejected (ADR-002).

@@ -1,12 +1,10 @@
-﻿"""Tests for Pydantic API schemas.
+"""Tests for Pydantic API schemas.
 
 Verifies that request/response schemas enforce validation rules
 and serialize correctly (ADR-004).
 """
 
 from __future__ import annotations
-
-from decimal import Decimal
 
 import pytest
 from pydantic import ValidationError
@@ -75,8 +73,6 @@ class TestErrorBody:
 
 class TestPaginatedResponse:
     def test_structure(self) -> None:
-        resp = PaginatedResponse[str](
-            items=["a", "b"], total=10, page=1, page_size=2
-        )
+        resp = PaginatedResponse[str](items=["a", "b"], total=10, page=1, page_size=2)
         assert len(resp.items) == 2
         assert resp.total == 10

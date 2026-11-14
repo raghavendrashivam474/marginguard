@@ -1,4 +1,4 @@
-﻿"""MarginGuard API — Organization schemas."""
+"""MarginGuard API — Organization schemas."""
 
 from __future__ import annotations
 
@@ -6,8 +6,6 @@ from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field
-
-from app.api.schemas.common import CurrencyField
 
 
 class OrganizationCreate(BaseModel):

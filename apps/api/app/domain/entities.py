@@ -1,4 +1,4 @@
-﻿"""MarginGuard domain entities.
+"""MarginGuard domain entities.
 
 Entities are domain objects with identity (UUID). They represent the core
 business concepts of MarginGuard and must not import any infrastructure
@@ -10,7 +10,7 @@ will mirror these structures but add persistence concerns.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID

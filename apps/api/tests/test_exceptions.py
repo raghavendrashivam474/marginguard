@@ -1,4 +1,4 @@
-﻿"""Tests for the standardized error envelope.
+"""Tests for the standardized error envelope.
 
 Verifies that API errors follow the structure defined in ADR-004.
 """

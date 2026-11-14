@@ -1,4 +1,4 @@
-﻿"""MarginGuard API — Finding and Evidence schemas."""
+"""MarginGuard API — Finding and Evidence schemas."""
 
 from __future__ import annotations
 

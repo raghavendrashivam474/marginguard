@@ -1,4 +1,4 @@
-﻿"""MarginGuard domain enumerations.
+"""MarginGuard domain enumerations.
 
 These enumerations define the allowed values for domain entity attributes.
 They live in the Domain layer and must not import any infrastructure framework.

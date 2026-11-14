@@ -1,4 +1,4 @@
-﻿"""MarginGuard domain value objects.
+"""MarginGuard domain value objects.
 
 Value objects are immutable, compared by value, and have no identity of their own.
 They must not import any infrastructure framework.
@@ -31,13 +31,9 @@ class Money:
                 "Use Decimal('42.00'), not float."
             )
         if not isinstance(self.currency, str) or len(self.currency) != 3:
-            raise ValueError(
-                f"Currency must be a 3-letter ISO 4217 code, got {self.currency!r}"
-            )
+            raise ValueError(f"Currency must be a 3-letter ISO 4217 code, got {self.currency!r}")
         if self.currency != self.currency.upper():
-            raise ValueError(
-                f"Currency must be uppercase, got {self.currency!r}"
-            )
+            raise ValueError(f"Currency must be uppercase, got {self.currency!r}")
 
     @classmethod
     def from_str(cls, amount: str, currency: str) -> Money:
@@ -71,36 +67,28 @@ class Money:
         if not isinstance(other, Money):
             return NotImplemented
         if self.currency != other.currency:
-            raise TypeError(
-                f"Cannot compare {self.currency} and {other.currency}."
-            )
+            raise TypeError(f"Cannot compare {self.currency} and {other.currency}.")
         return self.amount < other.amount
 
     def __le__(self, other: object) -> bool:
         if not isinstance(other, Money):
             return NotImplemented
         if self.currency != other.currency:
-            raise TypeError(
-                f"Cannot compare {self.currency} and {other.currency}."
-            )
+            raise TypeError(f"Cannot compare {self.currency} and {other.currency}.")
         return self.amount <= other.amount
 
     def __gt__(self, other: object) -> bool:
         if not isinstance(other, Money):
             return NotImplemented
         if self.currency != other.currency:
-            raise TypeError(
-                f"Cannot compare {self.currency} and {other.currency}."
-            )
+            raise TypeError(f"Cannot compare {self.currency} and {other.currency}.")
         return self.amount > other.amount
 
     def __ge__(self, other: object) -> bool:
         if not isinstance(other, Money):
             return NotImplemented
         if self.currency != other.currency:
-            raise TypeError(
-                f"Cannot compare {self.currency} and {other.currency}."
-            )
+            raise TypeError(f"Cannot compare {self.currency} and {other.currency}.")
         return self.amount >= other.amount
 
     def is_zero(self) -> bool:

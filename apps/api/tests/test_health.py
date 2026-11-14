@@ -1,4 +1,4 @@
-﻿"""Regression tests for health endpoints.
+"""Regression tests for health endpoints.
 
 Verifies that MG-S0.1 functionality remains intact after MG-S0.2 changes.
 These are the only runtime regression checks required by the sprint brief.

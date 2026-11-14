@@ -1,4 +1,4 @@
-﻿"""MarginGuard application layer.
+"""MarginGuard application layer.
 
 This package contains use cases, application services, and repository ports.
 It depends on the Domain layer only. Infrastructure implements the ports

@@ -1,4 +1,4 @@
-﻿"""MarginGuard API - application entry point."""
+"""MarginGuard API - application entry point."""
 
 from fastapi import FastAPI
 

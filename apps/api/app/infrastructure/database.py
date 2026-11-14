@@ -1,4 +1,4 @@
-﻿"""MarginGuard infrastructure — database engine and session management.
+"""MarginGuard infrastructure — database engine and session management.
 
 Provides lazy engine creation so the application can boot (e.g. for /health)
 even when no database is available. The engine is created on first access.
@@ -24,8 +24,7 @@ def get_engine():
         url = settings.DATABASE_URL
         if not url:
             raise RuntimeError(
-                "DATABASE_URL is not configured. "
-                "Set it in .env or as an environment variable."
+                "DATABASE_URL is not configured. Set it in .env or as an environment variable."
             )
         connect_args = {}
         if url.startswith("sqlite"):
@@ -40,6 +39,7 @@ def get_engine():
 
         # Enable foreign key enforcement for SQLite (test environment)
         if url.startswith("sqlite"):
+
             @event.listens_for(_engine, "connect")
             def _set_sqlite_pragma(dbapi_connection, connection_record):
                 cursor = dbapi_connection.cursor()

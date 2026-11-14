@@ -1,4 +1,4 @@
-﻿"""MarginGuard API — custom exceptions and FastAPI exception handlers.
+"""MarginGuard API — custom exceptions and FastAPI exception handlers.
 
 Provides a standardized error envelope for all API error responses.
 See ADR-004 and contracts/schemas/common.schema.json.
@@ -88,9 +88,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     """Register all custom exception handlers on the FastAPI app."""
 
     @app.exception_handler(MarginGuardError)
-    async def marginguard_error_handler(
-        request: Request, exc: MarginGuardError
-    ) -> JSONResponse:
+    async def marginguard_error_handler(request: Request, exc: MarginGuardError) -> JSONResponse:
         return _build_error_response(
             code=exc.code,
             message=exc.message,
@@ -117,9 +115,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(StarletteHTTPException)
-    async def http_exception_handler(
-        request: Request, exc: StarletteHTTPException
-    ) -> JSONResponse:
+    async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
         return _build_error_response(
             code="HTTP_ERROR",
             message=str(exc.detail),
@@ -127,9 +123,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(Exception)
-    async def unhandled_exception_handler(
-        request: Request, exc: Exception
-    ) -> JSONResponse:
+    async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         # Never expose internal stack traces in production
         return _build_error_response(
             code="INTERNAL_ERROR",

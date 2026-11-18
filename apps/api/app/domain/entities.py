@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
 from app.domain.enums import (
@@ -94,6 +95,9 @@ class Supplier:
     updated_at: datetime
     external_reference: str | None = None
     tax_identifier: str | None = None
+    import_batch_id: UUID | str | None = None
+    source_row_number: int | None = None
+    original_data: dict[str, Any] | None = None
 
 
 @dataclass(slots=True)
@@ -109,6 +113,9 @@ class PurchaseOrder:
     total_amount: Decimal
     status: str
     created_at: datetime
+    import_batch_id: UUID | str | None = None
+    source_row_number: int | None = None
+    original_data: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.total_amount < 0:
@@ -131,6 +138,10 @@ class Invoice:
     created_at: datetime
     purchase_order_id: UUID | None = None
     due_date: date | None = None
+    status: str = "PENDING"
+    import_batch_id: UUID | str | None = None
+    source_row_number: int | None = None
+    original_data: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.subtotal < 0:
@@ -158,8 +169,12 @@ class Payment:
     amount: Decimal
     created_at: datetime
     supplier_id: UUID | None = None
+    invoice_id: UUID | None = None
     external_reference: str | None = None
     payment_method: str | None = None
+    import_batch_id: UUID | str | None = None
+    source_row_number: int | None = None
+    original_data: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.amount <= 0:
@@ -244,4 +259,3 @@ class Investigation:
     created_at: datetime
     updated_at: datetime
     review_notes: str | None = None
-

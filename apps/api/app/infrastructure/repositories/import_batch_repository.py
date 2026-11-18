@@ -1,4 +1,4 @@
-﻿\"\"\"SQLAlchemy repository adapter for ImportBatch domain entity.\"\"\"
+﻿"""SQLAlchemy repository adapter for ImportBatch domain entity."""
 
 import uuid
 from datetime import datetime, timezone
@@ -14,7 +14,7 @@ from app.infrastructure.models import ImportBatchModel
 
 
 class SqlAlchemyImportBatchRepository(ImportBatchRepository):
-    \"\"\"SQLAlchemy implementation of ImportBatchRepository.\"\"\"
+    """SQLAlchemy implementation of ImportBatchRepository."""
 
     def __init__(self, session: Session) -> None:
         self._session = session
@@ -26,7 +26,7 @@ class SqlAlchemyImportBatchRepository(ImportBatchRepository):
         storage_key: str | None = None,
         error_summary: dict[str, Any] | None = None,
     ) -> ImportBatch:
-        \"\"\"Persist or update an ImportBatch domain entity.\"\"\"
+        """Persist or update an ImportBatch domain entity."""
         model = self._session.get(ImportBatchModel, batch.id)
         if model is None:
             model = ImportBatchModel(
@@ -65,7 +65,7 @@ class SqlAlchemyImportBatchRepository(ImportBatchRepository):
         return self._to_domain(model)
 
     def get_by_id(self, batch_id: uuid.UUID) -> ImportBatch | None:
-        \"\"\"Retrieve an ImportBatch by primary key.\"\"\"
+        """Retrieve an ImportBatch by primary key."""
         model = self._session.get(ImportBatchModel, batch_id)
         if model is None:
             return None
@@ -79,7 +79,7 @@ class SqlAlchemyImportBatchRepository(ImportBatchRepository):
         failed_rows: int | None = None,
         error_summary: dict[str, Any] | None = None,
     ) -> ImportBatch | None:
-        \"\"\"Update the status and row metrics of an import batch.\"\"\"
+        """Update the status and row metrics of an import batch."""
         model = self._session.get(ImportBatchModel, batch_id)
         if model is None:
             return None
@@ -109,7 +109,7 @@ class SqlAlchemyImportBatchRepository(ImportBatchRepository):
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[ImportBatch], int]:
-        \"\"\"List paginated import batches for a specific organization.\"\"\"
+        """List paginated import batches for a specific organization."""
         count_stmt = (
             select(func.count())
             .select_from(ImportBatchModel)
@@ -132,7 +132,7 @@ class SqlAlchemyImportBatchRepository(ImportBatchRepository):
 
     @staticmethod
     def _to_domain(model: ImportBatchModel) -> ImportBatch:
-        \"\"\"Map ORM model to domain entity.\"\"\"
+        """Map ORM model to domain entity."""
         batch = ImportBatch(
             id=model.id,
             organization_id=model.organization_id,
@@ -148,7 +148,6 @@ class SqlAlchemyImportBatchRepository(ImportBatchRepository):
             failed_rows=model.failed_rows,
             completed_at=model.completed_at,
         )
-        # Attach non-dataclass storage attributes dynamically
         if model.file_hash:
             object.__setattr__(batch, "file_hash", model.file_hash)
         if model.storage_key:

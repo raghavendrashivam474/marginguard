@@ -1,12 +1,14 @@
-"""SQLAlchemy ORM Database Models for MarginGuard."""
+﻿"""SQLAlchemy ORM Database Models for MarginGuard."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
+from decimal import Decimal
 
 from sqlalchemy import (
     CHAR,
     JSON,
     REAL,
+    Date,
     DateTime,
     ForeignKey,
     Index,
@@ -98,6 +100,9 @@ class ImportBatchModel(Base):
     total_rows: Mapped[int | None] = mapped_column(Integer, nullable=True, default=0)
     successful_rows: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     failed_rows: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    file_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    storage_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    error_summary: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )
@@ -116,6 +121,7 @@ class SupplierModel(Base):
     organization_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    external_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     tax_identifier: Mapped[str | None] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -124,6 +130,13 @@ class SupplierModel(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False
     )
+
+    # Provenance fields
+    import_batch_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("import_batches.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    source_row_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    original_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     organization: Mapped["OrganizationModel"] = relationship(back_populates="suppliers")
 
@@ -161,16 +174,25 @@ class PurchaseOrderModel(Base):
     supplier_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("suppliers.id", ondelete="RESTRICT"), nullable=False, index=True
     )
-    po_number: Mapped[str] = mapped_column(String(100), nullable=False)
-    order_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    external_reference: Mapped[str] = mapped_column(String(100), nullable=False)
+    order_date: Mapped[date] = mapped_column(Date, nullable=False)
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
-    total_amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
+    total_amount: Mapped[Decimal] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
     status: Mapped[str] = mapped_column(String(30), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )
 
-    __table_args__ = (UniqueConstraint("organization_id", "po_number", name="uq_po_org_number"),)
+    # Provenance fields
+    import_batch_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("import_batches.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    source_row_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    original_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("organization_id", "external_reference", name="uq_purchase_orders_org_ref"),
+    )
 
 
 class InvoiceModel(Base):
@@ -185,19 +207,26 @@ class InvoiceModel(Base):
     supplier_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("suppliers.id", ondelete="RESTRICT"), nullable=False, index=True
     )
-    invoice_number: Mapped[str] = mapped_column(String(100), nullable=False)
-    invoice_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    purchase_order_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("purchase_orders.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    external_reference: Mapped[str] = mapped_column(String(100), nullable=False)
+    invoice_date: Mapped[date] = mapped_column(Date, nullable=False)
+    due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
-    subtotal_amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
-    tax_amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
-    total_amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
+    subtotal: Mapped[Decimal] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
+    tax_amount: Mapped[Decimal] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
+    total_amount: Mapped[Decimal] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )
 
-    __table_args__ = (
-        UniqueConstraint("organization_id", "invoice_number", name="uq_invoice_org_number"),
+    # Provenance fields
+    import_batch_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("import_batches.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    source_row_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    original_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
 
 class PaymentModel(Base):
@@ -209,17 +238,24 @@ class PaymentModel(Base):
     organization_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    payment_number: Mapped[str] = mapped_column(String(100), nullable=False)
-    payment_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
+    supplier_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("suppliers.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    external_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    payment_date: Mapped[date] = mapped_column(Date, nullable=False)
+    currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
     payment_method: Mapped[str | None] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
     )
 
-    __table_args__ = (
-        UniqueConstraint("organization_id", "payment_number", name="uq_payment_org_number"),
+    # Provenance fields
+    import_batch_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("import_batches.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    source_row_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    original_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
 
 class EntityMatchModel(Base):
@@ -301,7 +337,7 @@ class RecoveryModel(Base):
     finding_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("findings.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
     review_notes: Mapped[str | None] = mapped_column(Text, nullable=True)

@@ -133,7 +133,7 @@ class SqlAlchemyImportBatchRepository(ImportBatchRepository):
     @staticmethod
     def _to_domain(model: ImportBatchModel) -> ImportBatch:
         """Map ORM model to domain entity."""
-        batch = ImportBatch(
+        return ImportBatch(
             id=model.id,
             organization_id=model.organization_id,
             data_source_id=model.data_source_id,
@@ -147,11 +147,8 @@ class SqlAlchemyImportBatchRepository(ImportBatchRepository):
             successful_rows=model.successful_rows,
             failed_rows=model.failed_rows,
             completed_at=model.completed_at,
+            file_hash=model.file_hash,
+            storage_key=model.storage_key,
+            error_summary=model.error_summary,
         )
-        if model.file_hash:
-            object.__setattr__(batch, "file_hash", model.file_hash)
-        if model.storage_key:
-            object.__setattr__(batch, "storage_key", model.storage_key)
-        if model.error_summary:
-            object.__setattr__(batch, "error_summary", model.error_summary)
-        return batch
+

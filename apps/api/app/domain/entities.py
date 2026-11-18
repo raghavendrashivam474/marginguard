@@ -1,4 +1,4 @@
-"""MarginGuard domain entities.
+﻿"""MarginGuard domain entities.
 
 Entities are domain objects with identity (UUID). They represent the core
 business concepts of MarginGuard and must not import any infrastructure
@@ -71,6 +71,9 @@ class ImportBatch:
     successful_rows: int = 0
     failed_rows: int = 0
     completed_at: datetime | None = None
+    file_hash: str | None = None
+    storage_key: str | None = None
+    error_summary: dict | None = None
 
     def __post_init__(self) -> None:
         if self.successful_rows < 0 or self.failed_rows < 0:
@@ -241,3 +244,4 @@ class Investigation:
     created_at: datetime
     updated_at: datetime
     review_notes: str | None = None
+

@@ -1,7 +1,8 @@
-"""Dependency injection utilities for FastAPI routes."""
+﻿from collections.abc import AsyncGenerator
+from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.services.import_batch_service import ImportBatchService
 from app.application.services.ingestion_service import IngestionService
@@ -11,6 +12,12 @@ from app.infrastructure.repositories import (
     SqlAlchemyDataSourceRepository,
     SqlAlchemyImportBatchRepository,
     SqlAlchemyOrganizationRepository,
+)
+from app.infrastructure.repositories.financial_repositories import (
+    SqlAlchemyInvoiceRepository,
+    SqlAlchemyPaymentRepository,
+    SqlAlchemyPurchaseOrderRepository,
+    SqlAlchemySupplierRepository,
 )
 from app.infrastructure.storage.base import StoragePort
 from app.infrastructure.storage.local_storage import LocalFileStorageService
@@ -22,7 +29,7 @@ def get_storage_service() -> StoragePort:
 
 
 def get_organization_service(
-    session: Session = Depends(get_db),
+    session: Annotated[AsyncSession, Depends(get_db)],
 ) -> OrganizationService:
     """Dependency for OrganizationService."""
     repo = SqlAlchemyOrganizationRepository(session)
@@ -30,7 +37,7 @@ def get_organization_service(
 
 
 def get_import_batch_service(
-    session: Session = Depends(get_db),
+    session: Annotated[AsyncSession, Depends(get_db)],
 ) -> ImportBatchService:
     """Dependency for ImportBatchService."""
     repo = SqlAlchemyImportBatchRepository(session)
@@ -38,14 +45,22 @@ def get_import_batch_service(
 
 
 def get_ingestion_service(
-    session: Session = Depends(get_db),
-    storage: StoragePort = Depends(get_storage_service),
+    session: Annotated[AsyncSession, Depends(get_db)],
+    storage: Annotated[StoragePort, Depends(get_storage_service)],
 ) -> IngestionService:
-    """Dependency for IngestionService."""
+    """Dependency for IngestionService with financial repositories injected."""
     batch_repo = SqlAlchemyImportBatchRepository(session)
     data_source_repo = SqlAlchemyDataSourceRepository(session)
+    supplier_repo = SqlAlchemySupplierRepository(session)
+    po_repo = SqlAlchemyPurchaseOrderRepository(session)
+    invoice_repo = SqlAlchemyInvoiceRepository(session)
+    payment_repo = SqlAlchemyPaymentRepository(session)
     return IngestionService(
         import_batch_repo=batch_repo,
         data_source_repo=data_source_repo,
         storage_service=storage,
+        supplier_repo=supplier_repo,
+        po_repo=po_repo,
+        invoice_repo=invoice_repo,
+        payment_repo=payment_repo,
     )

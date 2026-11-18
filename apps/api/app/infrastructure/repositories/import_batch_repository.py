@@ -1,7 +1,8 @@
-"""SQLAlchemy repository adapter for ImportBatch domain entity."""
+﻿"""SQLAlchemy repository adapter for ImportBatch domain entity."""
 
 import uuid
 from datetime import datetime, timezone
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -23,6 +24,7 @@ class SqlAlchemyImportBatchRepository(ImportBatchRepository):
         batch: ImportBatch,
         file_hash: str | None = None,
         storage_key: str | None = None,
+        error_summary: dict[str, Any] | None = None,
     ) -> ImportBatch:
         """Persist or update an ImportBatch domain entity."""
         model = self._session.get(ImportBatchModel, batch.id)
@@ -37,15 +39,24 @@ class SqlAlchemyImportBatchRepository(ImportBatchRepository):
                 total_rows=batch.total_rows or 0,
                 successful_rows=batch.successful_rows,
                 failed_rows=batch.failed_rows,
+                file_hash=file_hash or getattr(batch, "file_hash", None),
+                storage_key=storage_key or getattr(batch, "storage_key", None),
+                error_summary=error_summary or getattr(batch, "error_summary", None),
                 created_at=batch.created_at,
                 completed_at=batch.completed_at,
             )
             self._session.add(model)
         else:
             model.status = str(batch.status)
-            model.total_rows = batch.total_rows or 0
+            model.total_rows = batch.total_rows if batch.total_rows is not None else model.total_rows
             model.successful_rows = batch.successful_rows
             model.failed_rows = batch.failed_rows
+            if file_hash:
+                model.file_hash = file_hash
+            if storage_key:
+                model.storage_key = storage_key
+            if error_summary is not None:
+                model.error_summary = error_summary
             model.completed_at = batch.completed_at
 
         self._session.commit()
@@ -66,6 +77,7 @@ class SqlAlchemyImportBatchRepository(ImportBatchRepository):
         status: ImportStatus,
         successful_rows: int | None = None,
         failed_rows: int | None = None,
+        error_summary: dict[str, Any] | None = None,
     ) -> ImportBatch | None:
         """Update the status and row metrics of an import batch."""
         model = self._session.get(ImportBatchModel, batch_id)
@@ -77,6 +89,8 @@ class SqlAlchemyImportBatchRepository(ImportBatchRepository):
             model.successful_rows = successful_rows
         if failed_rows is not None:
             model.failed_rows = failed_rows
+        if error_summary is not None:
+            model.error_summary = error_summary
 
         if status in (
             ImportStatus.COMPLETED,
@@ -133,4 +147,8 @@ class SqlAlchemyImportBatchRepository(ImportBatchRepository):
             successful_rows=model.successful_rows,
             failed_rows=model.failed_rows,
             completed_at=model.completed_at,
+            file_hash=model.file_hash,
+            storage_key=model.storage_key,
+            error_summary=model.error_summary,
         )
+

@@ -22,6 +22,10 @@ from app.api.schemas.finding import (
     FindingDetailResponse,
     FindingResponse,
 )
+from app.api.schemas.import_batch import (
+    ImportBatchListResponse,
+    ImportBatchResponse,
+)
 from app.api.schemas.organization import (
     OrganizationCreate,
     OrganizationResponse,
@@ -34,6 +38,8 @@ __all__ = [
     "EvidenceResponse",
     "FindingDetailResponse",
     "FindingResponse",
+    "ImportBatchListResponse",
+    "ImportBatchResponse",
     "InvoiceResponse",
     "OrganizationCreate",
     "OrganizationResponse",

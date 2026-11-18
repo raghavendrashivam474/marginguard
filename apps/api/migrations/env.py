@@ -37,8 +37,7 @@ def get_url() -> str:
     url = settings.DATABASE_URL
     if not url:
         raise RuntimeError(
-            "DATABASE_URL is not configured. "
-            "Set it in .env or as an environment variable."
+            "DATABASE_URL is not configured. Set it in .env or as an environment variable."
         )
     return url
 

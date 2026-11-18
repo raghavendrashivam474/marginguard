@@ -1,26 +1,13 @@
-"""MarginGuard infrastructure — SQLAlchemy ORM models.
-
-These models map domain entities to PostgreSQL tables. They live in the
-Infrastructure layer and are the only place that imports SQLAlchemy.
-
-Design decisions (see ADR-005, data-model.md):
-- UUID primary keys (Python-side default for cross-DB compatibility)
-- NUMERIC(18,4) for all monetary columns
-- TIMESTAMPTZ for all timestamps
-- CHECK constraints matching the data model specification
-"""
-
-from __future__ import annotations
+"""SQLAlchemy ORM Database Models for MarginGuard."""
 
 import uuid
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     CHAR,
     JSON,
     REAL,
-    CheckConstraint,
-    Date,
+    DateTime,
     ForeignKey,
     Index,
     Integer,
@@ -29,417 +16,302 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import (
-    DeclarativeBase,
-    Mapped,
-    mapped_column,
-    relationship,
-)
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _new_uuid() -> uuid.UUID:
-    return uuid.uuid4()
-
-
 class Base(DeclarativeBase):
-    """Shared declarative base for all MarginGuard ORM models."""
+    """Base class for all SQLAlchemy ORM models."""
 
     pass
 
 
-# ---------------------------------------------------------------------------
-# Organization
-# ---------------------------------------------------------------------------
 class OrganizationModel(Base):
+    """Organization entity mapping to 'organizations' table."""
+
     __tablename__ = "organizations"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=_new_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     legal_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(default=_utcnow, onupdate=_utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False
+    )
 
-    # Relationships
-    data_sources: Mapped[list["DataSourceModel"]] = relationship(back_populates="organization")
-    import_batches: Mapped[list["ImportBatchModel"]] = relationship(back_populates="organization")
-    suppliers: Mapped[list["SupplierModel"]] = relationship(back_populates="organization")
+    data_sources: Mapped[list["DataSourceModel"]] = relationship(
+        back_populates="organization", cascade="all, delete-orphan"
+    )
+    import_batches: Mapped[list["ImportBatchModel"]] = relationship(
+        back_populates="organization", cascade="all, delete-orphan"
+    )
+    suppliers: Mapped[list["SupplierModel"]] = relationship(
+        back_populates="organization", cascade="all, delete-orphan"
+    )
+    products: Mapped[list["ProductModel"]] = relationship(
+        back_populates="organization", cascade="all, delete-orphan"
+    )
 
 
-# ---------------------------------------------------------------------------
-# DataSource
-# ---------------------------------------------------------------------------
 class DataSourceModel(Base):
+    """Data source mapping to 'data_sources' table."""
+
     __tablename__ = "data_sources"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=_new_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     organization_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("organizations.id"),
-        nullable=False,
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
     )
     source_type: Mapped[str] = mapped_column(String(50), nullable=False)
     source_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
+    )
 
     organization: Mapped["OrganizationModel"] = relationship(back_populates="data_sources")
-    import_batches: Mapped[list["ImportBatchModel"]] = relationship(back_populates="data_source")
+    import_batches: Mapped[list["ImportBatchModel"]] = relationship(
+        back_populates="data_source", cascade="all, delete-orphan"
+    )
 
-    __table_args__ = (Index("ix_data_sources_organization_id", "organization_id"),)
 
-
-# ---------------------------------------------------------------------------
-# ImportBatch
-# ---------------------------------------------------------------------------
 class ImportBatchModel(Base):
+    """Import batch execution tracking mapping to 'import_batches' table."""
+
     __tablename__ = "import_batches"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=_new_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     organization_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("organizations.id"),
-        nullable=False,
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
     )
     data_source_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("data_sources.id"),
-        nullable=False,
+        ForeignKey("data_sources.id", ondelete="CASCADE"), nullable=False, index=True
     )
     file_name: Mapped[str] = mapped_column(String(500), nullable=False)
     file_type: Mapped[str] = mapped_column(String(20), nullable=False)
-    status: Mapped[str] = mapped_column(String(30), nullable=False, default="pending")
-    total_rows: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    status: Mapped[str] = mapped_column(String(30), nullable=False)
+    total_rows: Mapped[int | None] = mapped_column(Integer, nullable=True, default=0)
     successful_rows: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     failed_rows: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
-    completed_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     organization: Mapped["OrganizationModel"] = relationship(back_populates="import_batches")
     data_source: Mapped["DataSourceModel"] = relationship(back_populates="import_batches")
 
-    __table_args__ = (
-        CheckConstraint(
-            "status IN ('pending','processing','completed','partially_completed','failed')",
-            name="ck_import_batches_status",
-        ),
-        CheckConstraint(
-            "successful_rows >= 0 AND failed_rows >= 0",
-            name="ck_import_batches_row_counts",
-        ),
-        Index("ix_import_batches_organization_id", "organization_id"),
-        Index("ix_import_batches_status", "status"),
-    )
 
-
-# ---------------------------------------------------------------------------
-# Supplier
-# ---------------------------------------------------------------------------
 class SupplierModel(Base):
+    """Supplier entity mapping to 'suppliers' table."""
+
     __tablename__ = "suppliers"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=_new_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     organization_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("organizations.id"),
-        nullable=False,
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    external_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     tax_identifier: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(default=_utcnow, onupdate=_utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False
+    )
 
     organization: Mapped["OrganizationModel"] = relationship(back_populates="suppliers")
 
-    __table_args__ = (
-        Index("ix_suppliers_organization_id", "organization_id"),
-        Index("ix_suppliers_name", "name"),
+
+class ProductModel(Base):
+    """Product catalog entity mapping to 'products' table."""
+
+    __tablename__ = "products"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    sku: Mapped[str] = mapped_column(String(100), nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    unit_of_measure: Mapped[str] = mapped_column(String(20), nullable=False, default="EA")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
     )
 
+    organization: Mapped["OrganizationModel"] = relationship(back_populates="products")
 
-# ---------------------------------------------------------------------------
-# PurchaseOrder
-# ---------------------------------------------------------------------------
+    __table_args__ = (UniqueConstraint("organization_id", "sku", name="uq_products_org_sku"),)
+
+
 class PurchaseOrderModel(Base):
+    """Purchase order document header mapping to 'purchase_orders' table."""
+
     __tablename__ = "purchase_orders"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=_new_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     organization_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("organizations.id"),
-        nullable=False,
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
     )
     supplier_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("suppliers.id"),
-        nullable=False,
+        ForeignKey("suppliers.id", ondelete="RESTRICT"), nullable=False, index=True
     )
-    external_reference: Mapped[str] = mapped_column(String(100), nullable=False)
-    order_date: Mapped[date] = mapped_column(Date, nullable=False)
+    po_number: Mapped[str] = mapped_column(String(100), nullable=False)
+    order_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
     total_amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
     status: Mapped[str] = mapped_column(String(30), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
-
-    __table_args__ = (
-        CheckConstraint("total_amount >= 0", name="ck_purchase_orders_total_amount"),
-        UniqueConstraint(
-            "organization_id",
-            "external_reference",
-            name="uq_purchase_orders_org_ref",
-        ),
-        Index("ix_purchase_orders_organization_id", "organization_id"),
-        Index("ix_purchase_orders_supplier_id", "supplier_id"),
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
     )
 
+    __table_args__ = (UniqueConstraint("organization_id", "po_number", name="uq_po_org_number"),)
 
-# ---------------------------------------------------------------------------
-# Invoice
-# ---------------------------------------------------------------------------
+
 class InvoiceModel(Base):
+    """Invoice document header mapping to 'invoices' table."""
+
     __tablename__ = "invoices"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=_new_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     organization_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("organizations.id"),
-        nullable=False,
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
     )
     supplier_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("suppliers.id"),
-        nullable=False,
+        ForeignKey("suppliers.id", ondelete="RESTRICT"), nullable=False, index=True
     )
-    purchase_order_id: Mapped[uuid.UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("purchase_orders.id"),
-        nullable=True,
-    )
-    external_reference: Mapped[str] = mapped_column(String(100), nullable=False)
-    invoice_date: Mapped[date] = mapped_column(Date, nullable=False)
-    due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    invoice_number: Mapped[str] = mapped_column(String(100), nullable=False)
+    invoice_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
-    subtotal: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
+    subtotal_amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
     tax_amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
     total_amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
+    )
 
     __table_args__ = (
-        CheckConstraint("subtotal >= 0", name="ck_invoices_subtotal"),
-        CheckConstraint("tax_amount >= 0", name="ck_invoices_tax_amount"),
-        CheckConstraint("total_amount >= 0", name="ck_invoices_total_amount"),
-        Index("ix_invoices_organization_id", "organization_id"),
-        Index("ix_invoices_supplier_id", "supplier_id"),
-        Index("ix_invoices_external_reference", "external_reference"),
+        UniqueConstraint("organization_id", "invoice_number", name="uq_invoice_org_number"),
     )
 
 
-# ---------------------------------------------------------------------------
-# Payment
-# ---------------------------------------------------------------------------
 class PaymentModel(Base):
+    """Payment document entity mapping to 'payments' table."""
+
     __tablename__ = "payments"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=_new_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     organization_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("organizations.id"),
-        nullable=False,
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    supplier_id: Mapped[uuid.UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("suppliers.id"),
-        nullable=True,
-    )
-    external_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    payment_date: Mapped[date] = mapped_column(Date, nullable=False)
-    currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
+    payment_number: Mapped[str] = mapped_column(String(100), nullable=False)
+    payment_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
     payment_method: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
+    )
 
     __table_args__ = (
-        CheckConstraint("amount > 0", name="ck_payments_amount"),
-        Index("ix_payments_organization_id", "organization_id"),
-        Index("ix_payments_supplier_id", "supplier_id"),
+        UniqueConstraint("organization_id", "payment_number", name="uq_payment_org_number"),
     )
 
 
-# ---------------------------------------------------------------------------
-# Match
-# ---------------------------------------------------------------------------
-class MatchModel(Base):
-    __tablename__ = "matches"
+class EntityMatchModel(Base):
+    """Entity resolution match candidate mapping to 'entity_matches' table."""
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=_new_uuid
-    )
+    __tablename__ = "entity_matches"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     organization_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("organizations.id"),
-        nullable=False,
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    match_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    source_record_type: Mapped[str] = mapped_column(String(30), nullable=False)
-    source_record_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
-    target_record_type: Mapped[str] = mapped_column(String(30), nullable=False)
-    target_record_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
-    matched_amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
-    matching_method: Mapped[str] = mapped_column(String(50), nullable=False)
+    source_entity_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    source_entity_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
+    target_entity_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    target_entity_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
     confidence: Mapped[float] = mapped_column(REAL, nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="proposed")
-    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
+    )
 
     __table_args__ = (
-        CheckConstraint(
-            "confidence >= 0.0 AND confidence <= 1.0",
-            name="ck_matches_confidence",
-        ),
-        CheckConstraint("matched_amount > 0", name="ck_matches_matched_amount"),
-        CheckConstraint(
-            "source_record_id != target_record_id",
-            name="ck_matches_different_records",
-        ),
-        Index("ix_matches_organization_id", "organization_id"),
-        Index(
-            "ix_matches_source",
-            "source_record_type",
-            "source_record_id",
-        ),
-        Index(
-            "ix_matches_target",
-            "target_record_type",
-            "target_record_id",
-        ),
+        Index("idx_entity_matches_src", "source_entity_type", "source_entity_id"),
+        Index("idx_entity_matches_tgt", "target_entity_type", "target_entity_id"),
     )
 
 
-# ---------------------------------------------------------------------------
-# Finding
-# ---------------------------------------------------------------------------
 class FindingModel(Base):
+    """Leakage finding entity mapping to 'findings' table."""
+
     __tablename__ = "findings"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=_new_uuid
-    )
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     organization_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("organizations.id"),
-        nullable=False,
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    finding_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    severity: Mapped[str] = mapped_column(String(20), nullable=False)
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="detected")
-    title: Mapped[str] = mapped_column(String(500), nullable=False)
-    description: Mapped[str] = mapped_column(Text, nullable=False)
-    amount_at_risk: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
-    currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
-    confidence: Mapped[float] = mapped_column(REAL, nullable=False)
     rule_id: Mapped[str] = mapped_column(String(100), nullable=False)
     rule_version: Mapped[str] = mapped_column(String(20), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(default=_utcnow, onupdate=_utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False
+    )
 
     evidence: Mapped[list["EvidenceModel"]] = relationship(
         back_populates="finding", cascade="all, delete-orphan"
     )
-
-    __table_args__ = (
-        CheckConstraint(
-            "confidence >= 0.0 AND confidence <= 1.0",
-            name="ck_findings_confidence",
-        ),
-        CheckConstraint("amount_at_risk >= 0", name="ck_findings_amount_at_risk"),
-        Index("ix_findings_organization_id", "organization_id"),
-        Index("ix_findings_status", "status"),
-        Index("ix_findings_finding_type", "finding_type"),
-        Index("ix_findings_severity", "severity"),
+    recoveries: Mapped[list["RecoveryModel"]] = relationship(
+        back_populates="finding", cascade="all, delete-orphan"
     )
 
 
-# ---------------------------------------------------------------------------
-# Evidence
-# ---------------------------------------------------------------------------
 class EvidenceModel(Base):
+    """Evidence record associated with a finding mapping to 'evidence' table."""
+
     __tablename__ = "evidence"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=_new_uuid
-    )
-    organization_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("organizations.id"),
-        nullable=False,
-    )
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     finding_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("findings.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("findings.id", ondelete="CASCADE"), nullable=False, index=True
     )
     evidence_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    source_record_type: Mapped[str] = mapped_column(String(30), nullable=False)
-    source_record_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     calculation_details: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
+    )
 
     finding: Mapped["FindingModel"] = relationship(back_populates="evidence")
 
-    __table_args__ = (
-        Index("ix_evidence_finding_id", "finding_id"),
-        Index("ix_evidence_organization_id", "organization_id"),
-    )
 
+class RecoveryModel(Base):
+    """Recovery workflow record mapping to 'recoveries' table."""
 
-# ---------------------------------------------------------------------------
-# Investigation
-# ---------------------------------------------------------------------------
-class InvestigationModel(Base):
-    __tablename__ = "investigations"
+    __tablename__ = "recoveries"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=_new_uuid
-    )
-    organization_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("organizations.id"),
-        nullable=False,
-    )
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     finding_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("findings.id"),
-        nullable=False,
+        ForeignKey("findings.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    amount: Mapped[float] = mapped_column(Numeric(18, 4, asdecimal=True), nullable=False)
+    currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
     review_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(default=_utcnow, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(default=_utcnow, onupdate=_utcnow, nullable=False)
-
-    __table_args__ = (
-        CheckConstraint(
-            "status IN ('open','in_progress','concluded')",
-            name="ck_investigations_status",
-        ),
-        Index("ix_investigations_finding_id", "finding_id"),
-        Index("ix_investigations_organization_id", "organization_id"),
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, nullable=False
     )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False
+    )
+
+    finding: Mapped["FindingModel"] = relationship(back_populates="recoveries")
+
+    __table_args__ = (Index("idx_recoveries_status", "status"),)

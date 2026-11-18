@@ -1,4 +1,4 @@
-﻿"""MarginGuard infrastructure — Repository exports."""
+"""MarginGuard infrastructure — Repository exports."""
 
 from app.infrastructure.repositories.data_source_repository import (
     SqlAlchemyDataSourceRepository,

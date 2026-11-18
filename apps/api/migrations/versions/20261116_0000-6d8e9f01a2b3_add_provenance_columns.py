@@ -1,4 +1,4 @@
-﻿"""add provenance columns and batch metadata
+"""add provenance columns and batch metadata
 
 Revision ID: 6d8e9f01a2b3
 Revises: 5c0df3e49454

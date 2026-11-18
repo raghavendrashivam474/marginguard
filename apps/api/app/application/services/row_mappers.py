@@ -1,4 +1,4 @@
-﻿"""
+"""
 Canonical Domain Mappers, Template Detector, and Row Validators for Ingestion.
 Enforces strict schema rules, numeric precision (Decimal), ISO 4217 currencies,
 and maps incoming parsed CSV rows into domain entities with provenance.
@@ -7,7 +7,7 @@ and maps incoming parsed CSV rows into domain entities with provenance.
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any
-from uuid import UUID, uuid4, uuid5, NAMESPACE_OID
+from uuid import NAMESPACE_OID, UUID, uuid4, uuid5
 
 from app.application.services.csv_reader import ParsedCsvRow
 from app.domain.entities import Invoice, Payment, PurchaseOrder, Supplier
@@ -49,25 +49,56 @@ def detect_document_category(headers: list[str]) -> str | None:
     """Detect document type based on header clues."""
     hdr_set = {h.lower().strip() for h in headers}
 
-    if "invoice_number" in hdr_set or "invoice_no" in hdr_set or "subtotal_amount" in hdr_set or "subtotal" in hdr_set:
+    if (
+        "invoice_number" in hdr_set
+        or "invoice_no" in hdr_set
+        or "subtotal_amount" in hdr_set
+        or "subtotal" in hdr_set
+    ):
         return DocumentCategory.INVOICE
     if "po_number" in hdr_set or "order_date" in hdr_set:
         return DocumentCategory.PURCHASE_ORDER
     if "payment_reference" in hdr_set or "payment_number" in hdr_set or "payment_date" in hdr_set:
         return DocumentCategory.PAYMENT
-    if "supplier_code" in hdr_set or "supplier_name" in hdr_set or "vendor_name" in hdr_set or "supplier_id" in hdr_set or "tax_id" in hdr_set:
+    if (
+        "supplier_code" in hdr_set
+        or "supplier_name" in hdr_set
+        or "vendor_name" in hdr_set
+        or "supplier_id" in hdr_set
+        or "tax_id" in hdr_set
+    ):
         return DocumentCategory.SUPPLIER
 
     return None
 
 
 ISO_4217_CURRENCIES = {
-    "USD", "EUR", "GBP", "CAD", "AUD", "JPY", "CHF", "CNY", "INR", "BRL",
-    "SEK", "NZD", "MXN", "SGD", "HKD", "NOK", "KRW", "TRY", "ZAR", "AED"
+    "USD",
+    "EUR",
+    "GBP",
+    "CAD",
+    "AUD",
+    "JPY",
+    "CHF",
+    "CNY",
+    "INR",
+    "BRL",
+    "SEK",
+    "NZD",
+    "MXN",
+    "SGD",
+    "HKD",
+    "NOK",
+    "KRW",
+    "TRY",
+    "ZAR",
+    "AED",
 }
 
 
-def parse_decimal(val: str, field_name: str, row_num: int) -> tuple[Decimal | None, RowValidationError | None]:
+def parse_decimal(
+    val: str, field_name: str, row_num: int
+) -> tuple[Decimal | None, RowValidationError | None]:
     """Parse strict Decimal without floating-point conversion, handling optional $ and commas."""
     if not val or not str(val).strip():
         return None, RowValidationError(
@@ -92,8 +123,12 @@ def parse_decimal(val: str, field_name: str, row_num: int) -> tuple[Decimal | No
         )
 
 
-def parse_date(val: str, field_name: str, row_num: int, required: bool = True) -> tuple[date | None, RowValidationError | None]:
-    """Parse string date into python date object. If required is False and value is missing, returns current UTC date."""
+def parse_date(
+    val: str, field_name: str, row_num: int, required: bool = True
+) -> tuple[date | None, RowValidationError | None]:
+    """Parse string date into python date object.
+    If required is False and value is missing, returns current UTC date.
+    """
     if not val or not str(val).strip():
         if not required:
             return datetime.utcnow().date(), None
@@ -186,7 +221,9 @@ class SupplierRowMapper:
             return None, errors
 
         tax_id = data.get("tax_identifier") or data.get("tax_id") or data.get("tax_number")
-        ext_ref = data.get("supplier_id") or data.get("external_reference") or data.get("supplier_code")
+        ext_ref = (
+            data.get("supplier_id") or data.get("external_reference") or data.get("supplier_code")
+        )
         now = datetime.utcnow()
 
         supplier = Supplier(
@@ -212,7 +249,9 @@ class PurchaseOrderRowMapper:
         data = parsed_row.data
         errors: list[RowValidationError] = []
 
-        po_number = data.get("po_number") or data.get("order_number") or data.get("external_reference")
+        po_number = (
+            data.get("po_number") or data.get("order_number") or data.get("external_reference")
+        )
         if not po_number or not po_number.strip():
             errors.append(
                 RowValidationError(
@@ -228,7 +267,9 @@ class PurchaseOrderRowMapper:
         vendor_uuid = parse_vendor_uuid(vendor_id_raw)
 
         issue_date_raw = data.get("order_date") or data.get("issue_date") or data.get("po_date")
-        issue_date, date_err = parse_date(issue_date_raw or "", "issue_date", row_num, required=False)
+        issue_date, date_err = parse_date(
+            issue_date_raw or "", "issue_date", row_num, required=False
+        )
         if date_err:
             errors.append(date_err)
 
@@ -270,7 +311,9 @@ class InvoiceRowMapper:
         data = parsed_row.data
         errors: list[RowValidationError] = []
 
-        inv_num = data.get("invoice_number") or data.get("invoice_no") or data.get("external_reference")
+        inv_num = (
+            data.get("invoice_number") or data.get("invoice_no") or data.get("external_reference")
+        )
         if not inv_num or not inv_num.strip():
             errors.append(
                 RowValidationError(
@@ -286,7 +329,9 @@ class InvoiceRowMapper:
         vendor_uuid = parse_vendor_uuid(vendor_id_raw)
 
         issue_date_raw = data.get("issue_date") or data.get("invoice_date")
-        issue_date, date_err = parse_date(issue_date_raw or "", "issue_date", row_num, required=False)
+        issue_date, date_err = parse_date(
+            issue_date_raw or "", "issue_date", row_num, required=False
+        )
         if date_err:
             errors.append(date_err)
 
@@ -361,7 +406,9 @@ class PaymentRowMapper:
         data = parsed_row.data
         errors: list[RowValidationError] = []
 
-        pym_num = data.get("payment_number") or data.get("payment_reference") or data.get("reference")
+        pym_num = (
+            data.get("payment_number") or data.get("payment_reference") or data.get("reference")
+        )
         if not pym_num or not pym_num.strip():
             errors.append(
                 RowValidationError(

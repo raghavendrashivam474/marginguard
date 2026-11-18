@@ -1,4 +1,4 @@
-﻿"""Unit tests for CsvRowReader."""
+"""Unit tests for CsvRowReader."""
 
 from app.application.services.csv_reader import CsvRowReader
 

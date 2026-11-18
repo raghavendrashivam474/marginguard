@@ -1,12 +1,9 @@
-﻿from datetime import datetime, timezone
-from decimal import Decimal
-import io
 import uuid
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
+
 from app.application.services.ingestion_service import IngestionService
-from app.domain.entities import ImportBatch, Organization, Supplier, Invoice
 from app.domain.enums import ImportStatus
 from app.infrastructure.storage.base import StoragePort, StoredFileResult
 
@@ -40,8 +37,11 @@ class InMemoryDataSourceRepo:
 
 
 class MockStoragePort(StoragePort):
-    async def save_file(self, organization_id_str: str, filename: str, content: bytes) -> StoredFileResult:
+    async def save_file(
+        self, organization_id_str: str, filename: str, content: bytes
+    ) -> StoredFileResult:
         from pathlib import Path
+
         return StoredFileResult(
             storage_key=f"test/{organization_id_str}/{filename}",
             file_path=Path(f"/tmp/{filename}"),
@@ -87,9 +87,7 @@ async def test_ingestion_service_supplier_csv():
     )
 
     csv_content = (
-        "vendor_name,tax_id,currency\n"
-        "Acme Global,TX-999,USD\n"
-        "Beta Corp,TX-888,EUR\n"
+        "vendor_name,tax_id,currency\nAcme Global,TX-999,USD\nBeta Corp,TX-888,EUR\n"
     ).encode("utf-8")
 
     org_id = uuid.uuid4()

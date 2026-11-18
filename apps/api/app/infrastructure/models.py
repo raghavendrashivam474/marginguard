@@ -1,4 +1,4 @@
-﻿"""SQLAlchemy ORM Database Models for MarginGuard."""
+"""SQLAlchemy ORM Database Models for MarginGuard."""
 
 import uuid
 from datetime import date, datetime, timezone
@@ -191,7 +191,9 @@ class PurchaseOrderModel(Base):
     original_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     __table_args__ = (
-        UniqueConstraint("organization_id", "external_reference", name="uq_purchase_orders_org_ref"),
+        UniqueConstraint(
+            "organization_id", "external_reference", name="uq_purchase_orders_org_ref"
+        ),
     )
 
 

@@ -1,4 +1,4 @@
-﻿"""SQLAlchemy repository adapter for ImportBatch domain entity."""
+"""SQLAlchemy repository adapter for ImportBatch domain entity."""
 
 import uuid
 from datetime import datetime, timezone
@@ -48,7 +48,9 @@ class SqlAlchemyImportBatchRepository(ImportBatchRepository):
             self._session.add(model)
         else:
             model.status = str(batch.status)
-            model.total_rows = batch.total_rows if batch.total_rows is not None else model.total_rows
+            model.total_rows = (
+                batch.total_rows if batch.total_rows is not None else model.total_rows
+            )
             model.successful_rows = batch.successful_rows
             model.failed_rows = batch.failed_rows
             if file_hash:
@@ -151,4 +153,3 @@ class SqlAlchemyImportBatchRepository(ImportBatchRepository):
             storage_key=model.storage_key,
             error_summary=model.error_summary,
         )
-

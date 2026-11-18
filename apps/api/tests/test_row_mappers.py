@@ -1,25 +1,36 @@
-﻿from decimal import Decimal
-import pytest
+from decimal import Decimal
 
 from app.application.services.csv_reader import ParsedCsvRow
 from app.application.services.row_mappers import (
     DocumentCategory,
-    SupplierRowMapper,
-    PurchaseOrderRowMapper,
     InvoiceRowMapper,
     PaymentRowMapper,
+    PurchaseOrderRowMapper,
+    SupplierRowMapper,
     detect_document_category,
-    parse_decimal,
     parse_date,
+    parse_decimal,
     validate_currency,
 )
 
 
 def test_detect_document_category():
-    assert detect_document_category(["supplier_id", "vendor_name", "tax_id"]) == DocumentCategory.SUPPLIER
-    assert detect_document_category(["po_number", "vendor_id", "total_amount"]) == DocumentCategory.PURCHASE_ORDER
-    assert detect_document_category(["invoice_number", "issue_date", "total_amount"]) == DocumentCategory.INVOICE
-    assert detect_document_category(["payment_number", "invoice_id", "amount"]) == DocumentCategory.PAYMENT
+    assert (
+        detect_document_category(["supplier_id", "vendor_name", "tax_id"])
+        == DocumentCategory.SUPPLIER
+    )
+    assert (
+        detect_document_category(["po_number", "vendor_id", "total_amount"])
+        == DocumentCategory.PURCHASE_ORDER
+    )
+    assert (
+        detect_document_category(["invoice_number", "issue_date", "total_amount"])
+        == DocumentCategory.INVOICE
+    )
+    assert (
+        detect_document_category(["payment_number", "invoice_id", "amount"])
+        == DocumentCategory.PAYMENT
+    )
     assert detect_document_category(["unknown_col_1", "unknown_col_2"]) is None
 
 
@@ -40,6 +51,7 @@ def test_validation_helpers():
 
     # Date
     from datetime import date
+
     val, err = parse_date("2026-03-15", "date_field", 1)
     assert val == date(2026, 3, 15)
     assert err is None
@@ -91,7 +103,13 @@ def test_purchase_order_row_mapper():
             "total_amount": "1500.50",
             "currency": "USD",
         },
-        raw_values=["PO-1001", "00000000-0000-0000-0000-000000000001", "2026-01-10", "1500.50", "USD"],
+        raw_values=[
+            "PO-1001",
+            "00000000-0000-0000-0000-000000000001",
+            "2026-01-10",
+            "1500.50",
+            "USD",
+        ],
         original_data={"po_number": "PO-1001"},
     )
     po, errs = mapper.map_row(parsed_row, import_batch_id="batch-001")

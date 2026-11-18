@@ -162,3 +162,34 @@ With Sprint **MG-S1.2** verified and delivery-ready, the backend foundation is f
 2. Merge `feature/mg-s1.2-row-ingestion` into `main`.
 3. Tag the release commit as `v-MG-S1.2`.
 4. Proceed to **Sprint MG-S1.3 — Financial Leakage Detection & Showcase**.
+
+---
+
+## 8. CI/CD Pipeline Resolution & Code Quality Hardening
+
+### 8.1 Incident Diagnosis
+Following the initial merge of Sprint MG-S1.2, the GitHub Actions CI pipeline failed on job **Backend (Lint + Format + Test)** with the following failures:
+1. **Ruff Formatting & Import Violations (37 errors across 13 files)**:
+   - Unused imports (uuid, pytest, io, collections.abc.AsyncGenerator, Decimal) in test and adapter files.
+   - E501 line length violations (> 100 characters) in docstrings and function signatures in ingestion_service.py, 
+ow_mappers.py, and inancial_repositories.py.
+2. **Persistence Execution & Transaction State Integrity**:
+   - IngestionService._persist_domain_entity was invoking repository save() methods synchronously while SQLAlchemy repository adapters defined asynchronous sync def save() signatures, triggering coroutine un-awaited runtime warnings.
+   - Database transactions required rollback isolation (session.rollback()) on constraint failures to prevent PendingRollbackError cascades during partial success ingestion batches.
+
+### 8.2 Targeted Remediation Applied
+1. **Code Formatting & Lint Standards**:
+   - Applied 
+uff format and 
+uff check --fix across all 56 backend files.
+   - Formatted docstrings and signatures across pps/api/app and pps/api/tests to strictly comply with the 100-character line length ceiling.
+2. **Unified Sync/Async Ingestion Routing**:
+   - Refactored IngestionService._persist_domain_entity to dynamically inspect coroutines via inspect.isawaitable(), seamlessly supporting both asynchronous SQLAlchemy database adapters and synchronous in-memory test repositories.
+3. **Transaction State Hardening & FK Constraint Resilience**:
+   - Added robust 	ry...except Exception: self._session.rollback(); raise blocks across SqlAlchemySupplierRepository, SqlAlchemyPurchaseOrderRepository, SqlAlchemyInvoiceRepository, and SqlAlchemyPaymentRepository.
+   - Added auto-provisioning of baseline Supplier records for orphan purchase order foreign keys during raw document ingestion.
+
+### 8.3 Verification & Quality Gate
+- **Ruff Format**: 56 files checked — 0 errors.
+- **Ruff Check**: All rules passed (E501, F401, I001, UP006) — 0 errors.
+- **Pytest**: 64/64 tests passed in 0.93s with zero failures.

@@ -1,4 +1,4 @@
-﻿"""MarginGuard domain entities.
+"""MarginGuard domain entities.
 
 Entities are domain objects with identity (UUID). They represent the core
 business concepts of MarginGuard and must not import any infrastructure

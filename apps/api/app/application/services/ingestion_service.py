@@ -1,4 +1,5 @@
-﻿"""Ingestion orchestration service for validating, storing, tracking, and processing uploaded files into canonical financial records."""
+"""Ingestion orchestration service for validating, storing, tracking,
+and processing uploaded files into canonical financial records."""
 
 import logging
 import uuid
@@ -30,7 +31,8 @@ logger = logging.getLogger(__name__)
 
 
 class IngestionService:
-    """Orchestrates file upload ingestion, storage, inspection, row-level parsing, and canonical persistence."""
+    """Orchestrates file upload ingestion, storage, inspection, row-level parsing,
+    and canonical persistence."""
 
     def __init__(
         self,
@@ -66,7 +68,8 @@ class IngestionService:
         source_type: str = "file_upload",
         forced_category: str | None = None,
     ) -> ImportBatch:
-        """Inspect, persist file to storage, parse CSV rows into financial domain records, and track lifecycle."""
+        """Inspect, persist file to storage, parse CSV rows into financial domain records,
+        and track lifecycle."""
         inspection = FileInspector.inspect_file(content=content, filename=filename)
         if not inspection.is_valid:
             raise ValueError(
@@ -146,7 +149,7 @@ class IngestionService:
                             error_details.append(err.to_dict())
                     elif domain_entity is not None:
                         try:
-                            self._persist_domain_entity(domain_entity)
+                            await self._persist_domain_entity(domain_entity)
                             successful_rows += 1
                         except Exception as exc:
                             logger.error(
@@ -203,16 +206,24 @@ class IngestionService:
         )
         return import_batch
 
-    def _persist_domain_entity(self, entity: Any) -> None:
+    async def _persist_domain_entity(self, entity: Any) -> None:
         """Helper to route domain entity to correct SQLAlchemy repository."""
-        if isinstance(entity, Supplier) and self._supplier_repo:
-            self._supplier_repo.save(entity)
-        elif isinstance(entity, PurchaseOrder) and self._po_repo:
-            self._po_repo.save(entity)
-        elif isinstance(entity, Invoice) and self._invoice_repo:
-            self._invoice_repo.save(entity)
-        elif isinstance(entity, Payment) and self._payment_repo:
-            self._payment_repo.save(entity)
+        import inspect
+
+        repo = None
+        if isinstance(entity, Supplier):
+            repo = self._supplier_repo
+        elif isinstance(entity, PurchaseOrder):
+            repo = self._po_repo
+        elif isinstance(entity, Invoice):
+            repo = self._invoice_repo
+        elif isinstance(entity, Payment):
+            repo = self._payment_repo
+
+        if repo and hasattr(repo, "save"):
+            res = repo.save(entity)
+            if inspect.isawaitable(res):
+                await res
 
     # Alias for method name
     ingest_file = process_file_upload

@@ -1,4 +1,4 @@
-﻿"""Streaming CSV row reader adapter with encoding detection and raw line index tracking."""
+"""Streaming CSV row reader adapter with encoding detection and raw line index tracking."""
 
 import csv
 from dataclasses import dataclass
@@ -10,7 +10,7 @@ class ParsedCsvRow:
     """Structured representation of a single physical CSV row."""
 
     source_row_number: int  # 1-based physical line index in file (row 1 is header)
-    data: dict[str, str]   # Cleaned header -> raw string value mapping
+    data: dict[str, str]  # Cleaned header -> raw string value mapping
     raw_values: Sequence[str]  # Positional cell values
     original_data: dict[str, Any]  # Raw JSON-serializable dictionary snapshot
 
